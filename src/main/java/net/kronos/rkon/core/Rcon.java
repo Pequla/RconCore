@@ -1,6 +1,7 @@
 package net.kronos.rkon.core;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -29,11 +30,40 @@ public class Rcon {
 	 * @throws AuthenticationException
 	 */
 	public Rcon(String host, int port, byte[] password) throws IOException, AuthenticationException {
+		this(host, port, password, 0);
+	}
+
+	/**
+	 * Create, connect and authenticate a new Rcon object
+	 *
+	 * @param host Rcon server address
+	 * @param port Rcon server port
+	 * @param password Rcon server password
+	 * @param timeout Rcon socket connection timeout
+	 *
+	 * @throws IOException
+	 * @throws AuthenticationException
+	 */
+	public Rcon(String host, int port, byte[] password, int timeout) throws IOException, AuthenticationException {
 		// Default charset is utf8
 		this.charset = StandardCharsets.UTF_8;
-		
+
 		// Connect to host
-		this.connect(host, port, password);
+		this.connect(host, port, password, timeout);
+	}
+
+	/**
+	 * Connect to a rcon server
+	 *
+	 * @param host Rcon server address
+	 * @param port Rcon server port
+	 * @param password Rcon server password
+	 *
+	 * @throws IOException
+	 * @throws AuthenticationException
+	 */
+	public void connect(String host, int port, byte[] password) throws IOException, AuthenticationException {
+		connect(host, port, password, 0);
 	}
 	
 	/**
@@ -42,11 +72,12 @@ public class Rcon {
 	 * @param host Rcon server address
 	 * @param port Rcon server port
 	 * @param password Rcon server password
-	 * 
+	 * @param timeout Rcon socket connection timeout
+	 *
 	 * @throws IOException
 	 * @throws AuthenticationException
 	 */
-	public void connect(String host, int port, byte[] password) throws IOException, AuthenticationException {
+	public void connect(String host, int port, byte[] password, int timeout) throws IOException, AuthenticationException {
 		if(host == null || host.trim().isEmpty()) {
 			throw new IllegalArgumentException("Host can't be null or empty");
 		}
@@ -61,7 +92,8 @@ public class Rcon {
 			this.requestId = rand.nextInt();
 			
 			// We can't reuse a socket, so we need a new one
-			this.socket = new Socket(host, port);
+			this.socket = new Socket();
+			socket.connect(new InetSocketAddress(host, port), timeout);
 		}
 		
 		// Send the auth packet
